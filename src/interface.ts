@@ -1,4 +1,13 @@
+export interface IInputs {
+  props: IProperties;
+  credentials: ICredentials;
+  appName: string;
+  args: string;
+  path: any;
+}
+
 export interface ICredentials {
+  Alias: string;
   AccountID: string;
   AccessKeyID: string;
   AccessKeySecret: string;
@@ -10,11 +19,11 @@ export interface IProperties {
   zoneId: string;
   vpcName: string;
   vSwitchName: string;
-  securityGroupName: string;
   vpcDescription?: string;
   vpcCidrBlock?: string;
   vSwitchDescription?: string;
   vSwitchCidrBlock?: string;
+  securityGroupName: string;
   securityGroupDescription?: string;
 }
 
@@ -31,6 +40,6 @@ export interface IDeleteProperties {
   securityGroupId: string;
 }
 
-export function isCredentials(arg: any): arg is ICredentials {
-  return arg.AccessKeyID !== undefined;
+export function isDeleteProperties(args: any): args is IDeleteProperties {
+  return args.vpcId && args.vSwitchId && args.securityGroupId;
 }

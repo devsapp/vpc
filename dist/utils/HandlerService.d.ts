@@ -6,6 +6,7 @@ interface IMackVpc {
     vpcName: string;
     description?: string;
     cidrBlock?: string;
+    onlyGet?: boolean;
 }
 interface IMackVswitch {
     regionId: string;
@@ -14,6 +15,7 @@ interface IMackVswitch {
     vSwitchName: string;
     description?: string;
     cidrBlock?: string;
+    onlyGet?: boolean;
 }
 interface IFindServiceRS {
     total: number;
@@ -24,6 +26,7 @@ interface IMackSecurityGroup {
     vpcId: string;
     securityGroupName: string;
     description?: string;
+    onlyGet?: boolean;
 }
 export default class HandlerService {
     logger: ILogger;
@@ -33,6 +36,7 @@ export default class HandlerService {
     getPopClient(endpoint: string, apiVersion: string, profile: ICredentials): Pop;
     create(properties: IProperties): Promise<IVpcConfig>;
     delete(inputs: IDeleteProperties): Promise<void>;
+    getVpcConfigs(properties: IProperties): Promise<IDeleteProperties>;
     mackVpc(inputs: IMackVpc): Promise<string>;
     mackVswitch(mackVswitch: IMackVswitch): Promise<string>;
     mackSecurityGroup(inputs: IMackSecurityGroup): Promise<string>;

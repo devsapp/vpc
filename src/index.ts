@@ -1,27 +1,11 @@
-import { HLogger, ILogger, getCredential } from '@serverless-devs/core';
+import { HLogger, ILogger, getCredential, commandParse, help } from '@serverless-devs/core';
 import _ from 'lodash';
-import { CONTEXT } from './constant';
-import { ICredentials, IProperties, IDeleteProperties, isCredentials } from './interface';
+import { CONTEXT, HELP } from './constant';
+import { IInputs, IProperties, IDeleteProperties, isDeleteProperties } from './interface';
 import HandlerService from './utils/HandlerService';
 
 export default class SlsCompoent {
   @HLogger(CONTEXT) logger: ILogger;
-
-  async getCredentials(
-    credentials: {} | ICredentials,
-    provider: string,
-    accessAlias?: string,
-  ): Promise<ICredentials> {
-    this.logger.debug(
-      `Obtain the key configuration, whether the key needs to be obtained separately: ${_.isEmpty(
-        credentials,
-      )}`,
-    );
-    if (isCredentials(credentials)) {
-      return credentials;
-    }
-    return await getCredential(provider, accessAlias);
-  }
 
   checkPropertiesAndGenerateResourcesName(properties: IProperties): IProperties {
     if (!properties.regionId) {
@@ -50,20 +34,22 @@ export default class SlsCompoent {
     return properties;
   }
 
-  async create(inputs) {
+  async create(inputs: IInputs) {
     this.logger.debug('Create vpc start...');
+    this.logger.debug(`[inputs params: ${JSON.stringify(inputs)}`);
 
-    const {
-      ProjectName: projectName,
-      Provider: provider,
-      AccessAlias: accessAlias,
-    } = inputs.Project;
-    this.logger.debug(`[${projectName}] inputs params: ${JSON.stringify(inputs)}`);
+    const apts = { boolean: ['help'], alias: { help: 'h' } };
+    const commandData: any = commandParse({ args: inputs.args }, apts);
+    this.logger.debug(`Command data is: ${JSON.stringify(commandData)}`);
+    if (commandData.data?.help) {
+      help(HELP);
+      return;
+    }
 
-    const credentials = await this.getCredentials(inputs.Credentials, provider, accessAlias);
-    const properties = this.checkPropertiesAndGenerateResourcesName(_.cloneDeep(inputs.Properties));
+    const credential = await getCredential(inputs.credentials?.Alias);
+    const properties = this.checkPropertiesAndGenerateResourcesName(_.cloneDeep(inputs.props));
     this.logger.debug(`Properties values: ${JSON.stringify(properties)}.`);
-    const client = new HandlerService(credentials);
+    const client = new HandlerService(credential);
     const vpcConfig = await client.create(properties);
 
     this.logger.debug(`Create vpc success, config is: ${JSON.stringify(vpcConfig)}.`);
@@ -72,19 +58,30 @@ export default class SlsCompoent {
 
   async delete(inputs) {
     this.logger.debug('Delete vpc start...');
+    this.logger.debug(`inputs params: ${JSON.stringify(inputs)}`);
 
-    const {
-      ProjectName: projectName,
-      Provider: provider,
-      AccessAlias: accessAlias,
-    } = inputs.Project;
-    this.logger.debug(`[${projectName}] inputs params: ${JSON.stringify(inputs)}`);
+    const apts = { boolean: ['help'], alias: { help: 'h' } };
+    const commandData: any = commandParse({ args: inputs.args }, apts);
+    this.logger.debug(`Command data is: ${JSON.stringify(commandData)}`);
+    if (commandData.data?.help) {
+      help(HELP);
+      return;
+    }
 
-    const credentials = await this.getCredentials(inputs.Credentials, provider, accessAlias);
-    const properties: IDeleteProperties = inputs.Properties;
+    const credential = await getCredential(inputs.credentials?.Alias);
+
+    let properties: IDeleteProperties;
+
+    const client = new HandlerService(credential);
+
+    if (isDeleteProperties(inputs.Properties)) {
+      properties = inputs.Properties;
+    } else {
+      const pro = this.checkPropertiesAndGenerateResourcesName(_.cloneDeep(inputs.props));
+      properties = await client.getVpcConfigs(pro);
+    }
     this.logger.debug(`Properties values: ${JSON.stringify(properties)}.`);
 
-    const client = new HandlerService(credentials);
     await client.delete(properties);
 
     this.logger.debug('Delete vpc success.');
