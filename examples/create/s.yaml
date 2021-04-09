@@ -1,0 +1,20 @@
+edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
+name: vpcApp            #  项目名称
+access: aliyun-release  #  秘钥别名
+
+services:
+  vpc-test: #  服务名称
+    component: vpc  # 组件名称
+    props: #  组件的属性值
+      # s create
+      regionId: cn-shenzhen
+      zoneId: cn-shenzhen-d
+      # vpcName: wss-vpc-test-1
+      # vpcDescription: wss-vpc-test
+      # vpcCidrBlock: 10.20.0.0/16
+      # vSwitchName: wss-vSwitchName-test
+      # vSwitchDescription: wss-vSwitchName-test
+      # vSwitchCidrBlock: 10.20.0.0/16
+      # securityGroupName: wss-securityGroupName-test
+      # securityGroupDescription: wss-securityGroupName-test
+
