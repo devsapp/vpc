@@ -46,7 +46,7 @@ export default class SlsCompoent {
       return;
     }
 
-    const credential = await getCredential(inputs.credentials?.Alias);
+    const credential = await getCredential(inputs.project.access);;
     const properties = this.checkPropertiesAndGenerateResourcesName(_.cloneDeep(inputs.props));
     this.logger.debug(`Properties values: ${JSON.stringify(properties)}.`);
     const client = new HandlerService(credential);
@@ -68,7 +68,7 @@ export default class SlsCompoent {
       return;
     }
 
-    const credential = await getCredential(inputs.credentials?.Alias);
+    const credential = await getCredential(inputs.project.access);;
 
     let properties: IDeleteProperties;
 
