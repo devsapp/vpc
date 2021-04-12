@@ -56,21 +56,6 @@ var HandlerService_1 = __importDefault(require("./utils/HandlerService"));
 var SlsCompoent = /** @class */ (function () {
     function SlsCompoent() {
     }
-    SlsCompoent.prototype.getCredentials = function (credentials, provider, accessAlias) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.logger.debug("Obtain the key configuration, whether the key needs to be obtained separately: " + lodash_1.default.isEmpty(credentials));
-                        if (interface_1.isCredentials(credentials)) {
-                            return [2 /*return*/, credentials];
-                        }
-                        return [4 /*yield*/, core_1.getCredential(provider, accessAlias)];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
     SlsCompoent.prototype.checkPropertiesAndGenerateResourcesName = function (properties) {
         if (!properties.regionId) {
             throw new Error('RegionId not fount.');
@@ -94,20 +79,28 @@ var SlsCompoent = /** @class */ (function () {
         return properties;
     };
     SlsCompoent.prototype.create = function (inputs) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var _a, projectName, provider, accessAlias, credentials, properties, client, vpcConfig;
+            var apts, commandData, credential, properties, client, vpcConfig;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         this.logger.debug('Create vpc start...');
-                        _a = inputs.Project, projectName = _a.ProjectName, provider = _a.Provider, accessAlias = _a.AccessAlias;
-                        this.logger.debug("[" + projectName + "] inputs params: " + JSON.stringify(inputs));
-                        return [4 /*yield*/, this.getCredentials(inputs.Credentials, provider, accessAlias)];
+                        this.logger.debug("[inputs params: " + JSON.stringify(inputs));
+                        apts = { boolean: ['help'], alias: { help: 'h' } };
+                        commandData = core_1.commandParse({ args: inputs.args }, apts);
+                        this.logger.debug("Command data is: " + JSON.stringify(commandData));
+                        if ((_a = commandData.data) === null || _a === void 0 ? void 0 : _a.help) {
+                            core_1.help(constant_1.HELP);
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, core_1.getCredential(inputs.project.access)];
                     case 1:
-                        credentials = _b.sent();
-                        properties = this.checkPropertiesAndGenerateResourcesName(lodash_1.default.cloneDeep(inputs.Properties));
+                        credential = _b.sent();
+                        ;
+                        properties = this.checkPropertiesAndGenerateResourcesName(lodash_1.default.cloneDeep(inputs.props));
                         this.logger.debug("Properties values: " + JSON.stringify(properties) + ".");
-                        client = new HandlerService_1.default(credentials);
+                        client = new HandlerService_1.default(credential);
                         return [4 /*yield*/, client.create(properties)];
                     case 2:
                         vpcConfig = _b.sent();
@@ -118,22 +111,39 @@ var SlsCompoent = /** @class */ (function () {
         });
     };
     SlsCompoent.prototype.delete = function (inputs) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var _a, projectName, provider, accessAlias, credentials, properties, client;
+            var apts, commandData, credential, properties, client, pro;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         this.logger.debug('Delete vpc start...');
-                        _a = inputs.Project, projectName = _a.ProjectName, provider = _a.Provider, accessAlias = _a.AccessAlias;
-                        this.logger.debug("[" + projectName + "] inputs params: " + JSON.stringify(inputs));
-                        return [4 /*yield*/, this.getCredentials(inputs.Credentials, provider, accessAlias)];
+                        this.logger.debug("inputs params: " + JSON.stringify(inputs));
+                        apts = { boolean: ['help'], alias: { help: 'h' } };
+                        commandData = core_1.commandParse({ args: inputs.args }, apts);
+                        this.logger.debug("Command data is: " + JSON.stringify(commandData));
+                        if ((_a = commandData.data) === null || _a === void 0 ? void 0 : _a.help) {
+                            core_1.help(constant_1.HELP);
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, core_1.getCredential(inputs.project.access)];
                     case 1:
-                        credentials = _b.sent();
+                        credential = _b.sent();
+                        ;
+                        client = new HandlerService_1.default(credential);
+                        if (!interface_1.isDeleteProperties(inputs.Properties)) return [3 /*break*/, 2];
                         properties = inputs.Properties;
-                        this.logger.debug("Properties values: " + JSON.stringify(properties) + ".");
-                        client = new HandlerService_1.default(credentials);
-                        return [4 /*yield*/, client.delete(properties)];
+                        return [3 /*break*/, 4];
                     case 2:
+                        pro = this.checkPropertiesAndGenerateResourcesName(lodash_1.default.cloneDeep(inputs.props));
+                        return [4 /*yield*/, client.getVpcConfigs(pro)];
+                    case 3:
+                        properties = _b.sent();
+                        _b.label = 4;
+                    case 4:
+                        this.logger.debug("Properties values: " + JSON.stringify(properties) + ".");
+                        return [4 /*yield*/, client.delete(properties)];
+                    case 5:
                         _b.sent();
                         this.logger.debug('Delete vpc success.');
                         return [2 /*return*/];
@@ -148,4 +158,4 @@ var SlsCompoent = /** @class */ (function () {
     return SlsCompoent;
 }());
 exports.default = SlsCompoent;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSw4Q0FBd0U7QUFDeEUsa0RBQXVCO0FBQ3ZCLHVDQUFxQztBQUNyQyx5Q0FBMEY7QUFDMUYsMEVBQW9EO0FBRXBEO0lBQUE7SUFxRkEsQ0FBQztJQWxGTyxvQ0FBYyxHQUFwQixVQUNFLFdBQThCLEVBQzlCLFFBQWdCLEVBQ2hCLFdBQW9COzs7Ozt3QkFFcEIsSUFBSSxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQ2Ysb0ZBQWtGLGdCQUFDLENBQUMsT0FBTyxDQUN6RixXQUFXLENBQ1YsQ0FDSixDQUFDO3dCQUNGLElBQUkseUJBQWEsQ0FBQyxXQUFXLENBQUMsRUFBRTs0QkFDOUIsc0JBQU8sV0FBVyxFQUFDO3lCQUNwQjt3QkFDTSxxQkFBTSxvQkFBYSxDQUFDLFFBQVEsRUFBRSxXQUFXLENBQUMsRUFBQTs0QkFBakQsc0JBQU8sU0FBMEMsRUFBQzs7OztLQUNuRDtJQUVELDZEQUF1QyxHQUF2QyxVQUF3QyxVQUF1QjtRQUM3RCxJQUFJLENBQUMsVUFBVSxDQUFDLFFBQVEsRUFBRTtZQUN4QixNQUFNLElBQUksS0FBSyxDQUFDLHFCQUFxQixDQUFDLENBQUM7U0FDeEM7UUFDRCxJQUFJLENBQUMsVUFBVSxDQUFDLE1BQU0sRUFBRTtZQUN0QixNQUFNLElBQUksS0FBSyxDQUFDLG1CQUFtQixDQUFDLENBQUM7U0FDdEM7UUFFRCxJQUFNLElBQUksR0FBTSxrQkFBTyx3QkFBcUIsQ0FBQztRQUM3QyxJQUFJLENBQUMsVUFBVSxDQUFDLE9BQU8sRUFBRTtZQUN2QixVQUFVLENBQUMsT0FBTyxHQUFHLElBQUksQ0FBQztZQUMxQixJQUFJLENBQUMsTUFBTSxDQUFDLElBQUksQ0FBQywyQ0FBeUMsSUFBSSxNQUFHLENBQUMsQ0FBQztT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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSw4Q0FBNEY7QUFDNUYsa0RBQXVCO0FBQ3ZCLHVDQUEyQztBQUMzQyx5Q0FBMEY7QUFDMUYsMEVBQW9EO0FBRXBEO0lBQUE7SUFrRkEsQ0FBQztJQS9FQyw2REFBdUMsR0FBdkMsVUFBd0MsVUFBdUI7UUFDN0QsSUFBSSxDQUFDLFVBQVUsQ0FBQyxRQUFRLEVBQUU7WUFDeEIsTUFBTSxJQUFJLEtBQUssQ0FBQyxxQkFBcUIsQ0FBQyxDQUFDO1NBQ3hDO1FBQ0QsSUFBSSxDQUFDLFVBQVUsQ0FBQyxNQUFNLEVBQUU7WUFDdEIsTUFBTSxJQUFJLEtBQUssQ0FBQyxtQkFBbUIsQ0FBQyxDQUFDO1NBQ3RDO1FBRUQsSUFBTSxJQUFJLEdBQU0sa0JBQU8sd0JBQXFCLENBQUM7UUFDN0MsSUFBSSxDQUFDLFVBQVUsQ0FBQyxPQUFPLEVBQUU7WUFDdkIsVUFBVSxDQUFDLE9BQU8sR0FBRyxJQUFJLENBQUM7WUFDMUIsSUFBSSxDQUFDLE1BQU0sQ0FBQyxJQUFJLENBQUMsMkNBQXlDLElBQUksTUFBRyxDQUFDLENBQUM7U0FDcEU7UUFFRCxJQUFJLENBQUMsVUFBVSxDQUFDLFdBQVcsRUFBRTtZQUMzQixVQUFVLENBQUMsV0FBVyxHQUFHLElBQUksQ0FBQztZQUM5QixJQUFJLENBQUMsTUFBTSxDQUFDLElBQUksQ0FBQywrQ0FBNkMsSUFBSSxNQUFHLENBQUMsQ0FBQztTQUN4RTtRQUVELElBQUksQ0FBQyxVQUFVLENBQUMsaUJBQWlCLEVBQUU7WUFDakMsVUFBVSxDQUFDLGlCQUFpQixHQUFHLElBQUksQ0FBQztZQUNwQyxJQUFJLENBQUMsTUFBTSxDQUFDLElBQUksQ0FBQyxxREFBbUQsSUFBSSxNQUFHLENBQUMsQ0FBQztTQUM5RTtR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

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isCredentials = void 0;
-function isCredentials(arg) {
-    return arg.AccessKeyID !== undefined;
+exports.isDeleteProperties = void 0;
+function isDeleteProperties(args) {
+    return args.vpcId && args.vSwitchId && args.securityGroupId;
 }
-exports.isCredentials = isCredentials;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW50ZXJmYWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL2ludGVyZmFjZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFpQ0EsU0FBZ0IsYUFBYSxDQUFDLEdBQVE7SUFDcEMsT0FBTyxHQUFHLENBQUMsV0FBVyxLQUFLLFNBQVMsQ0FBQztBQUN2QyxDQUFDO0FBRkQsc0NBRUMifQ==
+exports.isDeleteProperties = isDeleteProperties;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW50ZXJmYWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL2ludGVyZmFjZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUE4Q0EsU0FBZ0Isa0JBQWtCLENBQUMsSUFBUztJQUMxQyxPQUFPLElBQUksQ0FBQyxLQUFLLElBQUksSUFBSSxDQUFDLFNBQVMsSUFBSSxJQUFJLENBQUMsZUFBZSxDQUFDO0FBQzlELENBQUM7QUFGRCxnREFFQyJ9

@@ -16,6 +16,7 @@ interface IMackVpc {
   vpcName: string;
   description?: string;
   cidrBlock?: string;
+  onlyGet?: boolean;
 }
 interface IMackVswitch {
   regionId: string;
@@ -24,6 +25,7 @@ interface IMackVswitch {
   vSwitchName: string;
   description?: string;
   cidrBlock?: string;
+  onlyGet?: boolean;
 }
 interface IFindServiceRS {
   total: number;
@@ -34,6 +36,7 @@ interface IMackSecurityGroup {
   vpcId: string;
   securityGroupName: string;
   description?: string;
+  onlyGet?: boolean;
 }
 
 export default class HandlerService {
@@ -125,8 +128,48 @@ export default class HandlerService {
     }
   }
 
+  async getVpcConfigs(properties: IProperties): Promise<IDeleteProperties> {
+    const {
+      regionId,
+      vpcName,
+      vSwitchName,
+      zoneId,
+      securityGroupName,
+    } = properties;
+
+    const vpcId = await this.mackVpc({
+      regionId,
+      vpcName,
+      onlyGet: true,
+    });
+
+    const vSwitchId = await this.mackVswitch({
+      regionId,
+      vpcId,
+      zoneId,
+      vSwitchName,
+      onlyGet: true,
+    });
+    this.logger.info(`VSwitchId is ${vSwitchId}.`);
+
+    const securityGroupId = await this.mackSecurityGroup({
+      regionId,
+      vpcId,
+      securityGroupName,
+      onlyGet: true,
+    });
+    this.logger.info(`SecurityGroupId is ${securityGroupId}.`);
+
+    return {
+      regionId,
+      vpcId,
+      vSwitchId,
+      securityGroupId,
+    };
+  }
+
   async mackVpc(inputs: IMackVpc): Promise<string> {
-    const { regionId, vpcName } = inputs;
+    const { regionId, vpcName, onlyGet } = inputs;
 
     const { total, list: filterVpcs } = await this.findVpcs(regionId, vpcName);
     this.logger.debug(`filter vpcs:: ${JSON.stringify(filterVpcs)}`);
@@ -145,14 +188,18 @@ export default class HandlerService {
       this.logger.debug(`vpcId is: ${vpcId}`);
 
       return vpcId;
-    } else {
-      this.logger.info('Vpc not found.');
-      return await this.createVpc(inputs);
     }
+
+    if (onlyGet) {
+      return '';
+    }
+
+    this.logger.info('Vpc not found.');
+    return await this.createVpc(inputs);
   }
 
   async mackVswitch(mackVswitch: IMackVswitch): Promise<string> {
-    const { regionId, vpcId, zoneId, vSwitchName } = mackVswitch;
+    const { regionId, vpcId, zoneId, vSwitchName, onlyGet } = mackVswitch;
 
     const { total, list: vSwitches } = await this.findVSwitches(
       regionId,
@@ -172,14 +219,18 @@ export default class HandlerService {
         choices: vSwitches.map(({ VSwitchId }): string => VSwitchId),
       });
       return vSwitchId;
-    } else {
-      this.logger.info('VSwitch not found.');
-      return await this.createVSwitch(mackVswitch);
     }
+    
+    if (onlyGet) {
+      return '';
+    }
+
+    this.logger.info('VSwitch not found.');
+    return await this.createVSwitch(mackVswitch);
   }
 
   async mackSecurityGroup(inputs: IMackSecurityGroup): Promise<string> {
-    const { regionId, vpcId, securityGroupName } = inputs;
+    const { regionId, vpcId, securityGroupName, onlyGet } = inputs;
     const { total, list: securityGroups } = await this.findSecurityGroups(
       regionId,
       vpcId,
@@ -199,10 +250,14 @@ export default class HandlerService {
         choices: securityGroups.map(({ SecurityGroupId }): string => SecurityGroupId),
       });
       return securityGroup;
-    } else {
-      this.logger.info('SecurityGroup not found.');
-      return await this.createSecurityGroup(inputs);
     }
+
+    if (onlyGet) {
+      return '';
+    }
+
+    this.logger.info('SecurityGroup not found.');
+    return await this.createSecurityGroup(inputs);
   }
 
   async findVpcs(regionId: string, vpcName?: string): Promise<IFindServiceRS> {
