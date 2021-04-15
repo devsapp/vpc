@@ -1,4 +1,5 @@
-export declare const CONTEXT = "FC-VPC";
+export declare const CONTEXT = "VPC";
+export declare const CONTEXT_NAME = "vpc";
 export declare const RETRYOPTIONS: {
     retries: number;
     factor: number;

@@ -1,6 +1,6 @@
-import { HLogger, ILogger, getCredential, commandParse, help } from '@serverless-devs/core';
+import { HLogger, ILogger, getCredential, reportComponent, commandParse, help } from '@serverless-devs/core';
 import _ from 'lodash';
-import { CONTEXT, HELP } from './constant';
+import { CONTEXT, HELP, CONTEXT_NAME } from './constant';
 import { IInputs, IProperties, IDeleteProperties, isDeleteProperties } from './interface';
 import HandlerService from './utils/HandlerService';
 
@@ -46,7 +46,12 @@ export default class SlsCompoent {
       return;
     }
 
-    const credential = await getCredential(inputs.project.access);;
+    const credential = await getCredential(inputs.project.access);
+    reportComponent(CONTEXT_NAME, {
+      uid: credential.AccountID,
+      command: 'create',
+    });
+
     const properties = this.checkPropertiesAndGenerateResourcesName(_.cloneDeep(inputs.props));
     this.logger.debug(`Properties values: ${JSON.stringify(properties)}.`);
     const client = new HandlerService(credential);
@@ -68,7 +73,11 @@ export default class SlsCompoent {
       return;
     }
 
-    const credential = await getCredential(inputs.project.access);;
+    const credential = await getCredential(inputs.project.access);
+    reportComponent(CONTEXT_NAME, {
+      uid: credential.AccountID,
+      command: 'delete',
+    });
 
     let properties: IDeleteProperties;
 

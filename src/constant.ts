@@ -1,4 +1,5 @@
-export const CONTEXT = 'FC-VPC';
+export const CONTEXT = 'VPC';
+export const CONTEXT_NAME = 'vpc';
 
 export const RETRYOPTIONS = {
   retries: 5,
