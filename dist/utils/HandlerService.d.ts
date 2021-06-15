@@ -32,6 +32,7 @@ export default class HandlerService {
     logger: ILogger;
     vpcClient: Pop;
     ecsClient: Pop;
+    stdoutFormatter: any;
     constructor(credentials: ICredentials);
     getPopClient(endpoint: string, apiVersion: string, profile: ICredentials): Pop;
     create(properties: IProperties): Promise<IVpcConfig>;

@@ -1,6 +1,6 @@
 {
   "name": "vpc",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "main": "./dist/index.js",
   "dependencies": {
     "@alicloud/pop-core": "^1.7.9",
@@ -24,10 +24,10 @@
     "webpack-cli": "^4.4.0"
   },
   "scripts": {
+    "start": "npm run dev",
     "dev": "npx tsc -w -p tsconfig.json",
     "prebuild": "rimraf dist",
-    "build:ts": "npx tsc -p tsconfig.json",
-    "build:component": "npx webpack --mode=production",
+    "build": "npx tsc -p tsconfig.json",
     "publish": "npm run build:component && s platform publish",
     "test": "jest",
     "test:cov": "jest --coverage",
