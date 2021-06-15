@@ -2,12 +2,13 @@ import { HLogger, ILogger, getCredential, reportComponent, commandParse, help } 
 import _ from 'lodash';
 import { CONTEXT, HELP, CONTEXT_NAME } from './constant';
 import { IInputs, IProperties, IDeleteProperties, isDeleteProperties } from './interface';
+import StdoutFormattter from './common/stdout-formatter';
 import HandlerService from './utils/HandlerService';
 
 export default class SlsCompoent {
   @HLogger(CONTEXT) logger: ILogger;
 
-  checkPropertiesAndGenerateResourcesName(properties: IProperties): IProperties {
+  private checkPropertiesAndGenerateResourcesName(properties: IProperties): IProperties {
     if (!properties.regionId) {
       throw new Error('RegionId not fount.');
     }
@@ -18,29 +19,29 @@ export default class SlsCompoent {
     const name = `${CONTEXT}-generate-resources`;
     if (!properties.vpcName) {
       properties.vpcName = name;
-      this.logger.info(`Vpc name not fount, generate name is: ${name}.`);
+      this.logger.info(StdoutFormattter.stdoutFormatter.using('vpc name', name));
     }
 
     if (!properties.vSwitchName) {
       properties.vSwitchName = name;
-      this.logger.info(`VSwitch name not fount, generate name is: ${name}.`);
+      this.logger.info(StdoutFormattter.stdoutFormatter.using('vswitch name', name));
     }
 
     if (!properties.securityGroupName) {
       properties.securityGroupName = name;
-      this.logger.info(`SecurityGroup name not fount, generate name is: ${name}.`);
+      this.logger.info(StdoutFormattter.stdoutFormatter.using('securityGroup name', name));
     }
 
     return properties;
   }
 
+  private async initStdout() {
+    await StdoutFormattter.initStdout();
+  }
+
   async create(inputs: IInputs) {
-    // @ts-ignore
-    delete inputs.Credentials;
-    // @ts-ignore
-    delete inputs.credentials;
     this.logger.debug('Create vpc start...');
-    this.logger.debug(`[inputs params: ${JSON.stringify(inputs)}`);
+    this.logger.debug(`[inputs params: ${JSON.stringify(inputs.props)}`);
 
     const apts = { boolean: ['help'], alias: { help: 'h' } };
     const commandData: any = commandParse({ args: inputs.args }, apts);
@@ -49,8 +50,14 @@ export default class SlsCompoent {
       help(HELP);
       return;
     }
+    await this.initStdout();
 
-    const credential = await getCredential(inputs.project.access);
+    // @ts-ignore
+    let credential = inputs.credentials;
+    if (!credential) {
+      credential = await getCredential(inputs.project.access);
+    }
+
     reportComponent(CONTEXT_NAME, {
       uid: credential.AccountID,
       command: 'create',
@@ -67,7 +74,7 @@ export default class SlsCompoent {
 
   async delete(inputs) {
     this.logger.debug('Delete vpc start...');
-    this.logger.debug(`inputs params: ${JSON.stringify(inputs)}`);
+    this.logger.debug(`inputs params: ${JSON.stringify(inputs.props)}`);
 
     const apts = { boolean: ['help'], alias: { help: 'h' } };
     const commandData: any = commandParse({ args: inputs.args }, apts);
@@ -76,8 +83,13 @@ export default class SlsCompoent {
       help(HELP);
       return;
     }
+    await this.initStdout();
 
-    const credential = await getCredential(inputs.project.access);
+    // @ts-ignore
+    let credential = inputs.credentials;
+    if (!credential) {
+      credential = await getCredential(inputs.project.access);
+    }
     reportComponent(CONTEXT_NAME, {
       uid: credential.AccountID,
       command: 'delete',
