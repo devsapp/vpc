@@ -74,7 +74,10 @@ export default class SlsCompoent extends Base {
     this.logger.debug(`Properties values: ${JSON.stringify(properties)}.`);
 
     await client.delete(properties);
-
+    super.__report({
+      name: 'vpc',
+      content: { region: properties.regionId, vpcId: '', vSwitchId: '', securityGroupId: '' },
+    });
     this.logger.debug('Delete vpc success.');
   }
 
