@@ -1,12 +1,13 @@
 {
   "name": "vpc",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "./dist/index.js",
   "dependencies": {
     "@alicloud/pop-core": "^1.7.9",
     "@serverless-devs/core": "^0.0.x",
     "inquirer": "^7.3.3",
     "lodash": "^4.17.20",
+    "lodash.get": "^4.4.2",
     "promise-retry": "^2.0.1"
   },
   "devDependencies": {
