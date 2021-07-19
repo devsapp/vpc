@@ -1,9 +1,10 @@
 import { ILogger } from '@serverless-devs/core';
 import { IInputs } from './interface';
-export default class SlsCompoent {
+import Base from './common/base';
+export default class SlsCompoent extends Base {
     logger: ILogger;
-    private checkPropertiesAndGenerateResourcesName;
-    private initStdout;
     create(inputs: IInputs): Promise<import("./interface").IVpcConfig>;
     delete(inputs: any): Promise<void>;
+    private checkPropertiesAndGenerateResourcesName;
+    private initStdout;
 }
