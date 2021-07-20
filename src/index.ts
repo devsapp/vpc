@@ -37,6 +37,7 @@ export default class SlsCompoent extends Base {
     this.logger.debug(`Create vpc success, config is: ${JSON.stringify(vpcConfig)}.`);
     super.__report({
       name: 'vpc',
+      access: inputs.project?.access,
       content: { region: properties.regionId, ...vpcConfig },
     });
     return vpcConfig;
@@ -55,7 +56,7 @@ export default class SlsCompoent extends Base {
     }
     await this.initStdout();
 
-    const credential = inputs.credentials || await getCredential(inputs.project.access);
+    const credential = inputs.credentials || await getCredential(inputs.project?.access);
     reportComponent(CONTEXT_NAME, {
       uid: credential.AccountID,
       command: 'delete',
@@ -76,6 +77,7 @@ export default class SlsCompoent extends Base {
     await client.delete(properties);
     super.__report({
       name: 'vpc',
+      access: inputs.project?.access,
       content: { region: properties.regionId, vpcId: '', vSwitchId: '', securityGroupId: '' },
     });
     this.logger.debug('Delete vpc success.');
