@@ -4,7 +4,7 @@ import { CONTEXT, HELP, CONTEXT_NAME } from './constant';
 import { IInputs, IProperties, IDeleteProperties, isDeleteProperties } from './interface';
 import Base from './common/base';
 import StdoutFormattter from './common/stdout-formatter';
-import HandlerService from './utils/HandlerService';
+import HandlerService from './utils/handlerService';
 
 export default class SlsCompoent extends Base {
   @HLogger(CONTEXT) logger: ILogger;
