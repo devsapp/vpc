@@ -85,10 +85,10 @@ export default class SlsCompoent extends Base {
 
   private checkPropertiesAndGenerateResourcesName(properties: IProperties): IProperties {
     if (!properties.regionId) {
-      throw new Error('RegionId not fount.');
+      throw new Error('RegionId not found.');
     }
     if (!properties.zoneId) {
-      throw new Error('ZoneId not fount.');
+      throw new Error('ZoneId not found.');
     }
 
     const name = `${CONTEXT}-generate-resources`;
