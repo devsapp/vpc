@@ -8,7 +8,6 @@ import HandlerService from './utils/handlerService';
 import logger from './common/logger';
 
 export default class SlsCompoent extends Base {
-
   async create(inputs: IInputs) {
     logger.debug('Create vpc start...');
     logger.debug(`[inputs params: ${JSON.stringify(inputs.props)}`);
