@@ -1,9 +1,8 @@
-import { HLogger, ILogger } from '@serverless-devs/core';
-import inquirer from 'inquirer';
+import { inquirer } from '@serverless-devs/core';
 import Pop from '@alicloud/pop-core';
 import StdoutFormattter from '../common/stdout-formatter';
-import { CONTEXT } from '../constant';
 import { ICredentials, IProperties, IVpcConfig, IDeleteProperties } from '../interface';
+import logger from '../common/logger';
 
 const requestOption = {
   method: 'POST',
@@ -40,7 +39,6 @@ interface IMackSecurityGroup {
 }
 
 export default class HandlerService {
-  @HLogger(CONTEXT) logger: ILogger;
   vpcClient: Pop;
   ecsClient: Pop;
   stdoutFormatter = StdoutFormattter.stdoutFormatter;
@@ -81,30 +79,50 @@ export default class HandlerService {
       securityGroupName,
     } = properties;
 
-    const vpcId = await this.mackVpc({
-      regionId,
-      vpcName,
-      description: vpcDescription,
-      cidrBlock: vpcCidrBlock,
-    });
+    let vpcId: string;
+    let vSwitchId: string;
+    let securityGroupId: string;
 
-    const vSwitchId = await this.mackVswitch({
-      regionId,
-      vpcId,
-      zoneId,
-      vSwitchName,
-      cidrBlock: vSwitchCidrBlock,
-      description: vSwitchDescription,
-    });
-    this.logger.debug(this.stdoutFormatter.using('vswitchId', vSwitchId));
+    await logger.task('Creating vpc, vswitch, securityGroup', [
+      {
+        title: this.stdoutFormatter.create('vpc', vpcName),
+        task: async () => {
+          vpcId = await this.mackVpc({
+            regionId,
+            vpcName,
+            description: vpcDescription,
+            cidrBlock: vpcCidrBlock,
+          });
+        },
+      },
+      {
+        title: this.stdoutFormatter.create('vswitch', vSwitchName),
+        task: async () => {
+          vSwitchId = await this.mackVswitch({
+            regionId,
+            vpcId,
+            zoneId,
+            vSwitchName,
+            cidrBlock: vSwitchCidrBlock,
+            description: vSwitchDescription,
+          });
+          logger.debug(this.stdoutFormatter.using('vswitchId', vSwitchId));
+        },
+      },
+      {
+        title: this.stdoutFormatter.create('securityGroup', securityGroupName),
+        task: async () => {
+          securityGroupId = await this.mackSecurityGroup({
+            regionId,
+            vpcId,
+            securityGroupName,
+            description: securityGroupDescription,
+          });
+          logger.debug(this.stdoutFormatter.using('securityGroupId', securityGroupId));
+        },
+      },
+    ]);
 
-    const securityGroupId = await this.mackSecurityGroup({
-      regionId,
-      vpcId,
-      securityGroupName,
-      description: securityGroupDescription,
-    });
-    this.logger.debug(this.stdoutFormatter.using('securityGroupId', securityGroupId));
 
     return {
       vpcId,
@@ -151,7 +169,7 @@ export default class HandlerService {
       vSwitchName,
       onlyGet: true,
     });
-    this.logger.debug(`VSwitchId is ${vSwitchId}.`);
+    logger.debug(`VSwitchId is ${vSwitchId}.`);
 
     const securityGroupId = await this.mackSecurityGroup({
       regionId,
@@ -159,7 +177,7 @@ export default class HandlerService {
       securityGroupName,
       onlyGet: true,
     });
-    this.logger.debug(`SecurityGroupId is ${securityGroupId}.`);
+    logger.debug(`SecurityGroupId is ${securityGroupId}.`);
 
     return {
       regionId,
@@ -173,20 +191,22 @@ export default class HandlerService {
     const { regionId, vpcName, onlyGet } = inputs;
 
     const { total, list: filterVpcs } = await this.findVpcs(regionId, vpcName);
-    this.logger.debug(`filter vpcs:: ${JSON.stringify(filterVpcs)}`);
+    logger.debug(`filter vpcs:: ${JSON.stringify(filterVpcs)}`);
 
     if (total === 1) {
       const vpcId = filterVpcs[0].VpcId;
-      this.logger.debug(this.stdoutFormatter.using('vpcId', vpcId));
+      logger.debug(this.stdoutFormatter.using('vpcId', vpcId));
       return vpcId;
     } else if (total > 1) {
+      logger.spinner?.stop();
       const { vpcId } = await inquirer.prompt({
         type: 'list',
         name: 'vpcId',
         message: 'There are multiple vpcs, please select a vpc:',
         choices: filterVpcs.map(({ VpcId }): string => VpcId),
       });
-      this.logger.debug(`vpcId is: ${vpcId}`);
+      logger.spinner?.start();
+      logger.debug(`vpcId is: ${vpcId}`);
 
       return vpcId;
     }
@@ -195,7 +215,7 @@ export default class HandlerService {
       return '';
     }
 
-    this.logger.debug('Vpc not found.');
+    logger.debug('Vpc not found.');
     return await this.createVpc(inputs);
   }
 
@@ -210,15 +230,17 @@ export default class HandlerService {
     );
 
     if (total === 1) {
-      this.logger.debug('There is only one vSwitch, directly reuse the current vSwitch.');
+      logger.debug('There is only one vSwitch, directly reuse the current vSwitch.');
       return vSwitches[0].VSwitchId;
     } else if (total === 2) {
+      logger.spinner?.stop();
       const { vSwitchId } = await inquirer.prompt({
         type: 'list',
         name: 'vSwitchId',
         message: 'There are multiple vSwitch, please select a vSwitch:',
         choices: vSwitches.map(({ VSwitchId }): string => VSwitchId),
       });
+      logger.spinner?.start();
       return vSwitchId;
     }
 
@@ -226,7 +248,7 @@ export default class HandlerService {
       return '';
     }
 
-    this.logger.debug('VSwitch not found.');
+    logger.debug('VSwitch not found.');
     return await this.createVSwitch(mackVswitch);
   }
 
@@ -239,17 +261,19 @@ export default class HandlerService {
     );
 
     if (total === 1) {
-      this.logger.debug(
+      logger.debug(
         'There is only one securityGroup, directly reuse the current securityGroups.',
       );
       return securityGroups[0].SecurityGroupId;
     } else if (total === 2) {
+      logger.spinner?.stop();
       const { securityGroup } = await inquirer.prompt({
         type: 'list',
         name: 'securityGroup',
         message: 'There are multiple securityGroup, please select a securityGroup:',
         choices: securityGroups.map(({ SecurityGroupId }): string => SecurityGroupId),
       });
+      logger.spinner?.start();
       return securityGroup;
     }
 
@@ -257,7 +281,7 @@ export default class HandlerService {
       return '';
     }
 
-    this.logger.debug('SecurityGroup not found.');
+    logger.debug('SecurityGroup not found.');
     return await this.createSecurityGroup(inputs);
   }
 
@@ -268,7 +292,7 @@ export default class HandlerService {
     let pageNumber: number;
 
     let vpcs: any[] = [];
-    this.logger.info(this.stdoutFormatter.get('vpc', vpcName));
+    logger.debug(this.stdoutFormatter.get('vpc', vpcName));
     do {
       const params = {
         RegionId: regionId,
@@ -277,15 +301,15 @@ export default class HandlerService {
         PageNumber: ++requestPageNumber,
       };
 
-      this.logger.debug(`find vpc PageNumber: ${params.PageNumber}`);
+      logger.debug(`find vpc PageNumber: ${params.PageNumber}`);
       const rs: any = await this.vpcClient.request('DescribeVpcs', params, requestOption);
-      this.logger.debug(`find vpc rs: ${JSON.stringify(rs)}`);
+      logger.debug(`find vpc rs: ${JSON.stringify(rs)}`);
 
       totalCount = rs.TotalCount;
       pageNumber = rs.PageNumber;
       vpcs = vpcs.concat(rs.Vpcs.Vpc);
     } while (totalCount && pageNumber && pageNumber * pageSize < totalCount);
-    this.logger.debug(`find vpcs end, findVpcs vpcs response: ${JSON.stringify(vpcs)}`);
+    logger.debug(`find vpcs end, findVpcs vpcs response: ${JSON.stringify(vpcs)}`);
 
     return { total: totalCount, list: vpcs };
   }
@@ -303,10 +327,10 @@ export default class HandlerService {
       ZoneId: zoneId,
       PageSize: 50,
     };
-    this.logger.info(this.stdoutFormatter.get('vswitch', vSwitchName));
+    logger.debug(this.stdoutFormatter.get('vswitch', vSwitchName));
 
     const rs: any = await this.vpcClient.request('DescribeVSwitches', params, requestOption);
-    this.logger.debug(`Call DescribeVSwitches response: ${JSON.stringify(rs)}`);
+    logger.debug(`Call DescribeVSwitches response: ${JSON.stringify(rs)}`);
 
     return { total: rs.TotalCount, list: rs.VSwitches.VSwitch };
   }
@@ -321,10 +345,10 @@ export default class HandlerService {
       VpcId: vpcId,
       SecurityGroupName: securityGroupName,
     };
-    this.logger.info(this.stdoutFormatter.get('securityGroup', securityGroupName));
+    logger.debug(this.stdoutFormatter.get('securityGroup', securityGroupName));
 
     const rs: any = await this.ecsClient.request('DescribeSecurityGroups', params, requestOption);
-    this.logger.debug(`Call DescribeSecurityGroups response: ${JSON.stringify(rs)}`);
+    logger.debug(`Call DescribeSecurityGroups response: ${JSON.stringify(rs)}`);
 
     const securityGroup = rs.SecurityGroups.SecurityGroup;
 
@@ -347,9 +371,7 @@ export default class HandlerService {
       Description: description,
       CidrBlock: cidrBlock || '10.20.0.0/16',
     };
-    this.logger.debug(`createVSwitch params is ${JSON.stringify(params)}.`);
-    this.logger.info(this.stdoutFormatter.create('vswitch', vSwitchName));
-
+    logger.debug(`createVSwitch params is ${JSON.stringify(params)}.`);
     const createRs: any = await this.vpcClient.request('CreateVSwitch', params, requestOption);
     return createRs.VSwitchId;
   }
@@ -363,13 +385,11 @@ export default class HandlerService {
       Description: description,
     };
 
-    this.logger.info(this.stdoutFormatter.create('vpc', vpcName));
-
     const createRs: any = await this.vpcClient.request('CreateVpc', createParams, requestOption);
-    this.logger.debug(`create vpc response is: ${JSON.stringify(createRs)}`);
+    logger.debug(`create vpc response is: ${JSON.stringify(createRs)}`);
     const vpcId = createRs.VpcId;
     await this.waitVpcUntilAvaliable(regionId, vpcId);
-    this.logger.info(`Create vpc success, vpcId is: ${vpcId}`);
+    logger.debug(`Create vpc success, vpcId is: ${vpcId}`);
 
     return vpcId;
   }
@@ -387,16 +407,15 @@ export default class HandlerService {
       VpcId: vpcId,
       SecurityGroupType: 'normal',
     };
-    this.logger.info(this.stdoutFormatter.create('securityGroup', securityGroupName));
     const createRs: any = await this.ecsClient.request(
       'CreateSecurityGroup',
       params,
       requestOption,
     );
-    this.logger.debug(`Call CreateSecurityGroup response is: ${JSON.stringify(createRs)}`);
+    logger.debug(`Call CreateSecurityGroup response is: ${JSON.stringify(createRs)}`);
 
     const id = createRs.SecurityGroupId;
-    this.logger.info(`Create securityGroup success, vpcId is: ${id}`);
+    logger.debug(`Create securityGroup success, vpcId is: ${id}`);
 
     return id;
   }
@@ -415,13 +434,13 @@ export default class HandlerService {
 
       await sleep(800);
 
-      this.logger.debug(`Call to DescribeVpcs: ${count}.`);
+      logger.debug(`Call to DescribeVpcs: ${count}.`);
       const rs: any = await this.vpcClient.request('DescribeVpcs', params, requestOption);
       const vpcs = rs.Vpcs.Vpc;
       if (vpcs && vpcs.length) {
         status = vpcs[0].Status;
 
-        this.logger.info(
+        logger.info(
           `VPC already created, waiting for status to be 'Available', the status is ${status} currently`,
         );
       }
@@ -433,7 +452,7 @@ export default class HandlerService {
   }
 
   async deleteVpc(regionId: string, vpcId: string): Promise<void> {
-    this.logger.info(this.stdoutFormatter.remove('vpc', vpcId));
+    logger.info(this.stdoutFormatter.remove('vpc', vpcId));
     await sleep(1000);
     await this.vpcClient.request(
       'DeleteVpc',
@@ -443,11 +462,11 @@ export default class HandlerService {
       },
       requestOption,
     );
-    this.logger.debug(`DeleteVpc ${regionId}/${vpcId} success.`);
+    logger.debug(`DeleteVpc ${regionId}/${vpcId} success.`);
   }
 
   async deleteVSwitchId(regionId: string, vSwitchId: string): Promise<void> {
-    this.logger.info(this.stdoutFormatter.remove('vswitch', vSwitchId));
+    logger.info(this.stdoutFormatter.remove('vswitch', vSwitchId));
     await this.vpcClient.request(
       'DeleteVSwitch',
       {
@@ -456,11 +475,11 @@ export default class HandlerService {
       },
       requestOption,
     );
-    this.logger.debug(`DeleteVSwitch ${regionId}/${vSwitchId} success.`);
+    logger.debug(`DeleteVSwitch ${regionId}/${vSwitchId} success.`);
   }
 
   async deleteSecurityGroupId(regionId: string, securityGroupId: string): Promise<void> {
-    this.logger.info(this.stdoutFormatter.remove('securityGroup', securityGroupId));
+    logger.info(this.stdoutFormatter.remove('securityGroup', securityGroupId));
     await this.ecsClient.request(
       'DeleteSecurityGroup',
       {
@@ -469,6 +488,6 @@ export default class HandlerService {
       },
       requestOption,
     );
-    this.logger.debug(`DeleteSecurityGroup ${regionId}/${securityGroupId} success.`);
+    logger.debug(`DeleteSecurityGroup ${regionId}/${securityGroupId} success.`);
   }
 }
